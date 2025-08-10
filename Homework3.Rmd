@@ -1,0 +1,290 @@
+---
+title: "Get geographic databases on the Internet and Map with Cartographic Projection"
+author: "Marcelo de Carvalho Alves"
+date: '`r format(Sys.time(), "%d %B, %Y")`'
+output: 
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+### Get geographic databases on the Internet
+
+The objective of the homework is to obtain a geographic database and perform a preliminary mapping of this data with a cartographic projection in geocomputation software. 
+
+
+
+### Geodata package
+
+R's `geodata` [@R-hijmans2024geodata] package is used to download geographic data. This package facilitates access to data on climate, elevation, soil, crops, species occurrence and administrative boundaries, and is a successor to the `getData()` function of the `raster` [@R-Hijmans2020raster] package. The `geodata` package has the `terra` [@R-hijmans2023terra] package as a dependency.
+
+
+
+### Installation 
+
+The `geodata` package can be installed from [**CRAN**](https://cran.r-project.org/web/packages/geodata/index.html) with the `install.packages` function. 
+
+
+
+```{r, eval=F, echo=T}
+install.packages("geodata")
+```
+
+
+
+
+Another option is to install the package from [**github**](https://github.com/rspatial/geodata). In the case of installing from github, the `remotes` package must be installed to access the repository with the `install_github` function. If the `remotes` package is not enabled with the `library` function, you must use the `remotes::` piece of code before the `install_github` function for the package installation to work. 
+
+
+
+```{r, eval=F, echo=T}
+install.packages("remotes")
+remotes::install_github("rspatial/geodata")
+```
+
+
+### Data application
+
+There are several applications for the geographic databases obtained by the `geodata` package. In this case we will start an application to obtain data from future climate simulations [**CMIP6**](https://www.carbonbrief.org/cmip6-the-next-generation-of-climate-models-explained/) from the project [**WorldClim**](https://worldclim.org/) and the Earth's administrative boundaries [**GADM**](https://gadm.org/) (Table \@ref(tab:tab7d)). 
+
+
+
+
+```{r tab7d, echo=FALSE, results='asis'}
+cat(' Table: \\label{tab:tab7d} Data obtained for homework application in the R geodata package using functions. 
+
+
+| Function | Description | 
+| :------------------------: | :---------------------------------------------------------------------------------: |
+| `gadm`, `world` | Administrative boundaries to any country or the whole world from GADM | 
+| `worldclim_global`, `worldclim_country`, `worldclim_tile` | WorldClim global climate data | 
+| `cmip6_world`, `cmip6_tile` | Global climate data in downscaled future simulations of WorldClim climate models | 
+ ')
+
+```
+
+
+### Load packages
+
+The packages `geodata` [@R-hijmans2024geodata], `sf` [@R-Pebesma2021sf], and `viridis` [@R-garnier2018package] needed for homework are loaded with the `library` function.
+
+
+```{r, eval=FALSE, echo=TRUE}
+library(geodata)
+#Loading required packages: terra
+#terra 1.7.3
+#Warning message:
+#package ‘geodata’ was built under R version 4.2.3 
+library(viridis)
+#Loading required packages: viridisLite
+library(sf)
+#Linking to GEOS 3.11.2, GDAL 3.7.2, PROJ 9.3.0; sf_use_s2() is TRUE
+```
+
+Note that the `terra` package is loaded automatically when you enable the `geodata` package. 
+
+
+### Get geographical database of country boundaries
+
+The geographical database with country boundaries is retrieved from the Internet with the `world()` function. The `path=tempdir()` argument is used to download data as temporary files in R. 
+
+```{r, eval=F, echo=T}
+w <- world(path=tempdir())
+#trying URL 'https://geodata.ucdavis.edu/gadm/gadm3.6/gadm36_adm0_r5_pk.rds'
+#Content type 'unknown' length 711937 bytes (695 KB)
+#downloaded 695 KB
+```
+
+The geodatabase header is displayed to check the characteristics of the geodatabase when typing the object name in the R console.
+
+
+```{r, eval=F, echo=T}
+w 
+# class       : SpatVector 
+# geometry    : polygons 
+# dimensions  : 231, 2  (geometries, attributes)
+# extent      : -180, 180, -90, 83.65625  (xmin, xmax, ymin, ymax)
+# coord. ref. : +proj=longlat +datum=WGS84 +no_defs 
+# names       : GID_0      NAME_0
+# type        : <chr>       <chr>
+# values      :   ABW       Aruba
+#                 AFG Afghanistan
+#                 AGO      Angola
+```
+
+Note that the geographic database is a `SpatVector` class with `polygons` geometry and a geodesic map projection system with WGS84 datum. The attribute values consist of a column of acronyms and another column with country names. 
+
+
+### Map geographic database with country names
+
+The `plot` function is used to map the geographic database and the `text` function to display the country names on the map (Figure \@ref(fig:fig21d)). 
+
+
+
+```{r, eval=F, echo=T}
+plot(w)
+text(w, labels = "NAME_0", cex=0.5)
+```
+
+```{r  fig21d, echo=FALSE, out.width = '100%', fig.align="center", fig.cap="Mapping geographical database of countries obtained from the GADM database."}
+
+knitr::include_graphics("assets/imgTarefa/globo.png")
+
+``` 
+
+### Export results to directory of interest
+
+The geographic database is exported in `ESRI Shapefile` format to the directory of interest in the computer with the `writeVector` function. 
+
+```{r, eval=F, echo=T}
+writeVector(w, "C:/Aulas/2021_2/GEO/shp/world.shp", options = "ENCODING=UTF-8",
+            overwrite = TRUE)
+```
+
+```{r, eval=F, echo=F, include=F}
+w=vect("C:/Aulas/2021_2/GEO/shp/world.shp")
+```
+
+
+Another option is to convert the data into `sf` class `data.frame` with the `st_as_sf` function and then export the data with the `st_write` function. 
+
+
+
+```{r, eval=F, echo=T}
+wsf <- st_as_sf(w) # Convert to sf class
+st_write(wsf, "C:/Aulas/2021_2/GEO/shp/wsf.shp")
+#Writing layer `wsf' to data source `C:/Aulas/2021_2/GEO/shp/wsf.shp' using 
+#driver `ESRI Shapefile'
+#Writing 231 features with 2 fields and geometry type Multi Polygon.
+```
+
+
+
+### Get WorldClim data from historical measurements
+
+
+The global precipitation climate data from WorldClim version 2.1 is obtained at 10-minute degree spatial resolution with the `worldclim_global` function in a temporary R directory.
+
+
+
+```{r, eval=F, echo=T}
+p <- worldclim_global("prec", 10, path = tempdir(), version="2.1")
+#trying URL
+#'https://geodata.ucdavis.edu/climate/worldclim/2_1/base/wc2.1_10m_prec.zip'
+#Content type 'application/zip' length 7258539 bytes (6.9 MB)
+#downloaded 6.9 MB
+```
+
+### Mapping climate surfaces and country polygons
+
+Precipitation climate results can be mapped for a month of interest (Figure \@ref(fig:fig22d)) or for all months (Figure \@ref(fig:fig23d)) using the `plot` function and arguments used in the following code.
+
+
+
+```{r, eval=F, echo=T}
+# January
+plot(p[[1]], col = turbo(100), fun = function() lines(w, col = "gray92", 
+                                                      lwd = 0.2))
+# All months of the year
+plot(p, col = turbo(100), fun = function() lines(w, col = "gray92",
+                                                 lwd = 0.2))
+```
+
+```{r  fig22d, echo=FALSE, out.width = '100%', fig.align="center", fig.cap="Global mapping of precipitation based on historical measurements from WorldClim in January."}
+
+knitr::include_graphics("assets/imgTarefa/prec.png")
+
+``` 
+
+```{r  fig23d, echo=FALSE, out.width = '100%', fig.align="center", fig.cap="Global mapping of precipitation based on historical WorldClim measurements from January to December."}
+
+knitr::include_graphics("assets/imgTarefa/prec1a12.png")
+
+``` 
+
+
+### Performing summary statistics
+
+The `summary` function is used to obtain summary statistics for global rainfall.
+
+
+
+
+```{r, eval=F, echo=T}
+summary(p[[1:4]])
+#wc2.1_10m_prec_01 wc2.1_10m_prec_02 wc2.1_10m_prec_03 wc2.1_10m_prec_04
+# Min.   :  0.0     Min.   :  0.00    Min.   :  0.00    Min.   :  0.00   
+# 1st Qu.:  0.0     1st Qu.:  2.00    1st Qu.:  5.00    1st Qu.:  7.00   
+# Median : 12.0     Median : 13.00    Median : 18.00    Median : 21.00   
+# Mean   : 40.6     Mean   : 38.44    Mean   : 43.17    Mean   : 42.33   
+# 3rd Qu.: 39.0     3rd Qu.: 37.00    3rd Qu.: 47.00    3rd Qu.: 47.00   
+# Max.   :759.0     Max.   :697.00    Max.   :638.00    Max.   :567.00   
+# NA's   :65591     NA's   :65591     NA's   :65591     NA's   :65591 
+summary(p[[5:8]])
+#wc2.1_10m_prec_05 wc2.1_10m_prec_06 wc2.1_10m_prec_07 wc2.1_10m_prec_08
+# Min.   :  0.0     Min.   :   0.00   Min.   :   0.00   Min.   :   0.00  
+# 1st Qu.:  8.0     1st Qu.:   2.00   1st Qu.:   7.00   1st Qu.:  15.00  
+# Median : 24.0     Median :  23.00   Median :  34.00   Median :  39.00  
+# Mean   : 45.3     Mean   :  47.93   Mean   :  57.46   Mean   :  60.11  
+# 3rd Qu.: 53.0     3rd Qu.:  63.00   3rd Qu.:  74.00   3rd Qu.:  75.00  
+# Max.   :653.0     Max.   :1236.00   Max.   :1965.00   Max.   :1391.00  
+# NA's   :65591     NA's   :65591     NA's   :65591     NA's   :65591 
+summary(p[[9:12]])
+#wc2.1_10m_prec_09 wc2.1_10m_prec_10 wc2.1_10m_prec_11 wc2.1_10m_prec_12
+# Min.   :  0.00    Min.   :  0.00    Min.   :  0.00    Min.   :  0.00   
+# 1st Qu.:  5.00    1st Qu.:  5.00    1st Qu.:  2.00    1st Qu.:  1.00   
+# Median : 29.00    Median : 24.00    Median : 17.00    Median : 15.00   
+# Mean   : 49.18    Mean   : 44.66    Mean   : 40.43    Mean   : 40.72   
+# 3rd Qu.: 61.00    3rd Qu.: 56.00    3rd Qu.: 49.00    3rd Qu.: 43.00   
+# Max.   :908.00    Max.   :794.00    Max.   :612.00    Max.   :719.00   
+# NA's   :65591     NA's   :65591     NA's   :65591     NA's   :65591 
+```
+
+
+### Exporting results 
+
+The geographical database with precipitation data is exported in `geotiff` format to the directory of interest on the computer with the `writeRaster` function. 
+
+```{r, eval=F, echo=T}
+writeRaster(p, "assets/img5/p.tif", overwrite = TRUE)
+```
+
+
+### Adding a map projection to the results
+
+
+The World Mollweide cartographic projection (ESRI:54009) is used to reproject the geodesic surface onto a flat surface. The `project` function is used to reproject vector and raster data.
+
+
+
+```{r, eval=F, echo=T}
+wmol <- project(w, "ESRI:54009") # Reproject Spatvector
+precmol <- project(p, "ESRI:54009") # Reproject SpatRaster
+```
+
+
+### Mapping climate surfaces and country polygons
+
+The precipitation climate surface for January is mapped adding country polygons with the `plot` function (Figure \@ref(fig:fig24d)). 
+
+```{r, eval=F, echo=T}
+plot(precmol[[1]], col = turbo(100), fun = function() lines(wmol, 
+                            col = "gray92", lwd = 0.2))
+```
+
+
+```{r  fig24d, echo=FALSE, out.width = '100%', fig.align="center", fig.cap="Global mapping of precipitation based on historical measurements from WorldClim for January using the Mollweide map projection."}
+
+knitr::include_graphics("assets/imgTarefa/precmol1.png")
+
+``` 
+
+
+
+
